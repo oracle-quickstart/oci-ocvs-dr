@@ -1,0 +1,93 @@
+# Copyright (c) 2019, 2020 Oracle Corporation and/or affiliates.  All rights reserved.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl
+# ---------------------------------------------------------------------------------------------------------------------
+# Terraform VCN for Oracle Cloud Infrastructure was used as a foundation for this project. https://github.com/oracle-terraform-modules/terraform-oci-vcn
+# Thank you for all that have contributed.
+# ---------------------------------------------------------------------------------------------------------------------
+
+# USER INPUTS *** REQUIRED PARAMETERS ***
+# You must provide a value for each parameter.
+# ---------------------------------------------------------------------------------------------------------------------
+########################
+# Pre-Deployment Tasks #
+########################
+### Create OCI account 
+# Free trial - https://docs.oracle.com/en-us/iaas/Content/GSG/Tasks/signingup_topic-Sign_Up_for_Free_Oracle_Cloud_Promotion.htm#sign_up_for_free
+### Install OCI CLI
+# OCI CLI Quickstart- https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm#Quickstart
+### Install Terraform
+# Oracle documentation - https://docs.oracle.com/en-us/iaas/developer-tutorials/tutorials/tf-provider/01-summary.htm
+# Scripted terraform install - https://github.com/robertpeteuil/terraform-installer
+# Easy to follow blog - https://hayato-iriumi.net/2020/10/16/how-to-start-terraform-with-oracle-cloud-infrastructure-oci/
+#### Ensure Evironment Varibles are avaialbe. Varibles expected are listed below. 
+# Setup environment variables manually - through shell scripting - or add to .bashrc/.bash_profile and source ~/.bashrc, or ~/.bash_profile 
+# Understanding Environment Variables - https://docs.oracle.com/en/learn/intro_terraform_linux/index.html#run-terraform
+### Install Provider 
+# Getting starded with provider - https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/terraformgettingstarted.htm
+### Install ortu utility for route table updates
+# https://pypi.org/project/ortu/
+# https://github.com/ITD27M01/oci-route-table-updater
+
+### Expected Environment Varibles (Update with your unique values)
+#export TF_VAR_tenancy_ocid="ocid1.tenancy.oc1..<unique_ID>"
+#export TF_VAR_compartment_ocid="ocid1.compartment.oc1..<unique_ID>"
+#export TF_VAR_user_ocid="ocid1.user.oc1..<unique_ID>"
+#export TF_VAR_fingerprint="<unique_ID>"
+#export TF_VAR_private_key_path="~/.oci/oci_api_key.pem"
+#export TF_VAR_ssh_public_key=$(cat ~/.ssh/id_rsa.pub)
+#export TF_VAR_ssh_private_key_path="~/.ssh/id_rsa"
+
+##########################
+# General VCN Parameters #
+##########################
+# Region where infrastructure will be deployed Example - "us-sanjose-1" - https://docs.oracle.com/en-us/iaas/Content/General/Concepts/regions.htm
+# Availibilty Domain 1 is desiganted as a default in the main.tf file. It can be updated if needed, however, not all Regions have more than one AD. 
+region                  = "us-ashburn-1"
+# Display name of VCN 
+vcn_name                = "mysddc"
+# A DNS label for the VCN, used in conjunction with the VNIC's hostname and subnet's DNS label to form a fully qualified domain name (FQDN) for each VNIC within this subnet
+vcn_dns_label           = "drsddc"
+# CIDR assigned to base VCN. Workflows are currently designed to support /20.
+vcn_cidr                = "10.0.0.0/20"
+# (optional) If any value other than "none", prefix value is added to naming of all resources.
+label_prefix            = "dr"
+# Option DRG assigned to VCN. If true, DRG will be created.
+create_drg              = false
+# Tags to be applied to all resources in all modules. Optional and customizable to any key, value pair.
+freeform_tags             = {
+  Owner                 = "team-ocvs"
+  DeployedBy            = "Terraform"
+}
+
+########################
+# SDDC Network Details #
+########################
+# If set true, workflow will create networking required for SDDC deployment, without deploying SDDC cluster
+sddc_network_enabled    = true
+# If set true, addvanced hardening rulesets will be applied per best practices - https://docs.oracle.com/en-us/iaas/Content/VMware/Reference/ocvssecurityrules.htm
+# If set false, SDDC VLANs that commonly require access betond the SDDC will have open communication to VCN networks outlined in the Network Security Group Rules
+# section of each NSG module located in modules/sddc/security directory. 
+sddc_network_hardened   = false
+
+
+########################
+# SDDC Cluster Details #
+########################
+# Details regardinf Oracle Cloud VMware Solution - https://docs.oracle.com/en-us/iaas/Content/VMware/Concepts/ocvsoverview.htm
+# Requires SDDC Netork Enabled. If set true, OCVS SDDC will be deployed based on the criteria included in this section
+sddc_enabled            = false
+# (Updateable) Name applied to SDDC. If label_prefix is supplied, it will be attached, e.g., <label_prefix>-<sddc_display_name>
+sddc_display_name       = "mysddc"
+# Number of ESXi Hosts to be deployed ranging from 3 to 16
+# ***IMPORTANT*** --> Changing host count following the inital SDDC deployment will result in deletion and recreation of entire cluster including data. This project does not offer expansion capabilites at this time, however, additional host can be added within the OCI GUI 
+esxi_hosts_count        = "3"
+# Versions of vSphere to be deployed. Options - 6.5 update 3, 6.7 update 3, 7.0 update 2
+# ***IMPORTANT*** --> Changing SW Version following the inital SDDC deployment will result in deletion and recreation of entire cluster including data.
+vmware_software_version = "7.0 update 2"
+# Term length of initial deployment - HOUR, MONTH, ONE_YEAR, THREE_YEARS
+# This value can be changed following the inital SDDC deploment. 
+initial_sku             = "HOUR"
+# Whether to include HCX appliance and networking to assist with VM migrations from external on-prem or cloud vSphere environmets
+is_hcx_enabled          = true
+# CIDR range of the NSX segment created in the inital workflow. The workflow currently supports 1 segment. Phase 2 of this project will focus on additional segments.
+workload_network_cidr   = "192.168.1.0/24"

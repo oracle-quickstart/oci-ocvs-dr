@@ -1,47 +1,40 @@
-###
-# compute.tf outputs
-###
+// Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+// Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
-output "instance_id" {
-  value = oci_core_instance.simple-vm.id
+output "bastion_ssh_command" {
+  value = "ssh -i ${var.ssh_private_key_path} opc@${module.bastion.bastion_public_ip}"
 }
 
-output "instance_public_ip" {
-  value = oci_core_instance.simple-vm.public_ip
+
+output "local_jumpbox_tunnel" {
+  value = "ssh -i ${var.ssh_private_key_path} opc@${module.bastion.bastion_public_ip} -L 3381:${module.instance.private_ip[0]}:3389"
 }
 
-output "instance_private_ip" {
-  value = oci_core_instance.simple-vm.private_ip
+
+/*
+
+# If enabled, current OCVS options will be dislayed in outputs
+
+output "supported_sddc_skus" {
+  value = data.oci_ocvp_supported_skus.supported_skus[*].items
 }
 
-output "instance_https_url" {
-  value = (local.is_public_subnet ? "https://${oci_core_instance.simple-vm.public_ip}" : "https://${oci_core_instance.simple-vm.private_ip}")
+output "sddc_sowtware_versions" {
+  value = data.oci_ocvp_supported_vmware_software_versions.supported_vmware_software_versions[*].items
+}
+*/
+
+/*
+# If enabled, sensitive information will be stored in state file.
+
+output "vcenter_username" {
+  value = module.sddc_cluster.vcenter_username
 }
 
-###
-# network.tf outputs
-###
-
-output "vcn_id" {
-  value = ! local.use_existing_network ? join("", oci_core_vcn.simple.*.id) : var.vcn_id
+output "vcenter_initial_password" {
+  value = module.sddc_cluster.vcenter_initial_password
 }
 
-output "subnet_id" {
-  value = ! local.use_existing_network ? join("", oci_core_subnet.simple_subnet.*.id) : var.subnet_id
-}
+*/
 
-output "vcn_cidr_block" {
-  value = ! local.use_existing_network ? join("", oci_core_vcn.simple.*.cidr_block) : var.vcn_cidr_block
-}
 
-output "nsg_id" {
-  value = join("", oci_core_network_security_group.simple_nsg.*.id)
-}
-
-###
-# image_subscription.tf outputs
-###
-
-output "subscription" {
-  value = data.oci_core_app_catalog_subscriptions.mp_image_subscription.*.app_catalog_subscriptions
-}
